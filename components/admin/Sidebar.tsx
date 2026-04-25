@@ -1,61 +1,72 @@
-'use client'
+"use client";
 
-import { createClient } from '@/lib/supabase/client'
-import Link from 'next/link'
-import { usePathname, useRouter } from 'next/navigation'
+import { createClient } from "@/lib/supabase/client";
+import Link from "next/link";
+import { usePathname, useRouter } from "next/navigation";
 
 const nav = [
-  { href: '/admin/dashboard', icon: '📊', label: 'Dashboard' },
-  { href: '/admin/orders',    icon: '🧾', label: 'Pesanan' },
-  { href: '/admin/stock',     icon: '📦', label: 'Stok' },
-  { href: '/admin/finance',   icon: '💰', label: 'Keuangan' },
-  { href: '/admin/products',  icon: '🍞', label: 'Produk' },
-]
+  { href: "/admin/dashboard", icon: "🏠", label: "Beranda" },
+  { href: "/admin/orders", icon: "🧾", label: "Pesanan" },
+  { href: "/admin/stock", icon: "📦", label: "Stok" },
+  { href: "/admin/products", icon: "🍞", label: "Produk" },
+  { href: "/admin/finance", icon: "💰", label: "Keuangan" },
+];
 
 export default function Sidebar() {
-  const pathname = usePathname()
-  const router = useRouter()
+  const pathname = usePathname();
+  const router = useRouter();
 
-  // Sidebar tidak muncul di halaman login
-  if (pathname === '/admin/login') return null
+  if (pathname === "/admin/login") return null;
 
   const handleLogout = async () => {
-    const supabase = createClient()
-    await supabase.auth.signOut()
-    router.push('/admin/login')
-    router.refresh()
-  }
+    const supabase = createClient();
+    await supabase.auth.signOut();
+    router.push("/admin/login");
+    router.refresh();
+  };
 
   return (
     <>
       {/* Desktop sidebar */}
-      <aside className="hidden md:flex flex-col w-52 min-h-screen bg-amber-900 text-white shrink-0">
-        <div className="p-5 border-b border-amber-800">
-          <p className="text-xl font-bold">🥐 Tatara</p>
-          <p className="text-amber-300 text-xs mt-0.5">Admin Panel</p>
+      <aside className="hidden shrink-0 flex-col border-r border-stone-200 bg-white md:flex md:w-60">
+        <div className="border-b border-stone-100 p-5">
+          <div className="flex items-center gap-2">
+            <span className="grid h-9 w-9 place-items-center rounded-full bg-rose-700 font-serif text-white">
+              T
+            </span>
+            <div>
+              <p className="font-serif text-lg font-semibold text-stone-900">
+                Tatara
+              </p>
+              <p className="text-[11px] text-stone-400">Panel Owner</p>
+            </div>
+          </div>
         </div>
 
-        <nav className="flex-1 p-3 space-y-1">
-          {nav.map(({ href, icon, label }) => (
-            <Link
-              key={href}
-              href={href}
-              className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition ${
-                pathname === href
-                  ? 'bg-amber-700 text-white'
-                  : 'text-amber-200 hover:bg-amber-800'
-              }`}
-            >
-              <span className="text-base">{icon}</span>
-              {label}
-            </Link>
-          ))}
+        <nav className="flex-1 space-y-1 p-3">
+          {nav.map(({ href, icon, label }) => {
+            const active = pathname === href;
+            return (
+              <Link
+                key={href}
+                href={href}
+                className={`flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition ${
+                  active
+                    ? "bg-rose-50 text-rose-800"
+                    : "text-stone-600 hover:bg-stone-50"
+                }`}
+              >
+                <span className="text-base">{icon}</span>
+                {label}
+              </Link>
+            );
+          })}
         </nav>
 
-        <div className="p-3 border-t border-amber-800">
+        <div className="border-t border-stone-100 p-3">
           <button
             onClick={handleLogout}
-            className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm text-amber-300 hover:bg-amber-800 transition"
+            className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm text-stone-500 hover:bg-stone-50"
           >
             <span>🚪</span> Keluar
           </button>
@@ -63,22 +74,25 @@ export default function Sidebar() {
       </aside>
 
       {/* Mobile bottom nav */}
-      <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-amber-900 border-t border-amber-800 z-50">
+      <nav className="fixed bottom-0 left-0 right-0 z-30 border-t border-stone-200 bg-white md:hidden">
         <div className="flex justify-around">
-          {nav.map(({ href, icon, label }) => (
-            <Link
-              key={href}
-              href={href}
-              className={`flex flex-col items-center py-2 px-3 text-xs transition ${
-                pathname === href ? 'text-white' : 'text-amber-300'
-              }`}
-            >
-              <span className="text-xl mb-0.5">{icon}</span>
-              {label}
-            </Link>
-          ))}
+          {nav.map(({ href, icon, label }) => {
+            const active = pathname === href;
+            return (
+              <Link
+                key={href}
+                href={href}
+                className={`flex flex-1 flex-col items-center py-2 text-[10px] transition ${
+                  active ? "text-rose-700" : "text-stone-500"
+                }`}
+              >
+                <span className="text-lg">{icon}</span>
+                {label}
+              </Link>
+            );
+          })}
         </div>
       </nav>
     </>
-  )
+  );
 }

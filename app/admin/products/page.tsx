@@ -1,110 +1,169 @@
-import { AddProductForm, AddVariantForm } from '@/components/admin/ProductForm'
-import { requireAdmin } from '@/lib/supabase/admin-guard'
-import { createClient } from '@/lib/supabase/server'
-import { toggleProductStatus } from './actions'
+import { AddProductForm, AddVariantForm } from "@/components/admin/ProductForm";
+import { requireAdmin } from "@/lib/supabase/admin-guard";
+import { createClient } from "@/lib/supabase/server";
+import { toggleProductStatus } from "./actions";
+
+export const dynamic = "force-dynamic";
+
+type VariantRow = {
+  id: string;
+  name: string;
+  price: number;
+  stock_conversion: number;
+  status: string;
+};
+
+type ProductRow = {
+  id: string;
+  name: string;
+  description: string | null;
+  status: string;
+  variants: VariantRow[];
+};
 
 async function getProducts() {
-  const supabase = await createClient()
+  const supabase = await createClient();
   const { data } = await supabase
-    .from('products')
+    .from("products")
     .select(`
       id, name, description, status,
       variants (id, name, price, stock_conversion, status)
     `)
-    .order('created_at', { ascending: false })
-  return data ?? []
+    .order("created_at", { ascending: false });
+
+  return (data ?? []) as unknown as ProductRow[];
 }
 
 export default async function ProductsPage() {
-  await requireAdmin()
-  const products = await getProducts()
+  await requireAdmin();
+  const products = await getProducts();
 
   return (
-    <div className="p-5 md:p-8 max-w-2xl">
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold text-gray-900">Produk</h1>
-        <p className="text-gray-400 text-sm mt-0.5">{products.length} produk terdaftar</p>
+    <div className="mx-auto max-w-5xl px-4 py-8 md:px-8">
+      <div className="mb-8">
+        <p className="text-xs font-semibold uppercase tracking-widest text-rose-700">
+          Produk
+        </p>
+        <h1 className="mt-1 font-serif text-3xl font-semibold text-stone-900 md:text-4xl">
+          Kelola produk
+        </h1>
+        <p className="mt-1 text-stone-500">
+          {products.length} produk terdaftar
+        </p>
       </div>
 
       {/* Add product form */}
-      <div className="bg-white rounded-2xl p-5 shadow-sm mb-6">
-        <h2 className="font-semibold text-gray-800 mb-4">Tambah Produk Baru</h2>
-        <AddProductForm />
+      <div className="mb-8 rounded-2xl bg-white p-6 ring-1 ring-stone-100">
+        <h2 className="font-serif text-lg font-semibold text-stone-900">
+          Tambah Produk Baru
+        </h2>
+        <p className="mt-1 text-xs text-stone-500">
+          Masukkan nama dan deskripsi singkat.
+        </p>
+        <div className="mt-4">
+          <AddProductForm />
+        </div>
       </div>
 
       {/* Product list */}
-      <div className="space-y-4">
-        {products.map((product) => (
-          <div key={product.id} className="bg-white rounded-2xl shadow-sm overflow-hidden">
-            <div className="p-4 flex justify-between items-start">
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2 mb-0.5">
-                  <p className="font-semibold text-gray-900">{product.name}</p>
-                  <span className={`text-xs px-2 py-0.5 rounded-full ${
-                    product.status === 'active'
-                      ? 'bg-green-100 text-green-700'
-                      : 'bg-gray-100 text-gray-500'
-                  }`}>
-                    {product.status === 'active' ? 'Aktif' : 'Nonaktif'}
-                  </span>
-                </div>
-                {product.description && (
-                  <p className="text-gray-400 text-sm truncate">{product.description}</p>
-                )}
-              </div>
-              <form action={async () => {
-                'use server'
-                await toggleProductStatus(product.id, product.status)
-              }}>
-                <button
-                  type="submit"
-                  className={`ml-3 text-xs px-3 py-1.5 rounded-lg border font-medium transition ${
-                    product.status === 'active'
-                      ? 'border-gray-200 text-gray-500 hover:border-red-200 hover:text-red-500'
-                      : 'border-green-200 text-green-600 hover:bg-green-50'
-                  }`}
-                >
-                  {product.status === 'active' ? 'Nonaktifkan' : 'Aktifkan'}
-                </button>
-              </form>
-            </div>
+      {products.length === 0 ? (
+        <div className="rounded-2xl bg-white p-12 text-center ring-1 ring-stone-100">
+          <p className="text-4xl">🍞</p>
+          <p className="mt-4 font-serif text-xl text-stone-800">
+            Belum ada produk
+          </p>
+          <p className="mt-1 text-sm text-stone-500">
+            Tambah produk pertama di atas untuk mulai.
+          </p>
+        </div>
+      ) : (
+        <div className="grid gap-4">
+          {products.map((p) => (
+            <ProductCard key={p.id} product={p} />
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
 
-            {/* Variants */}
-            {(product.variants?.length ?? 0) > 0 && (
-              <div className="border-t border-gray-50 px-4 pb-1">
-                <p className="text-xs text-gray-400 font-medium pt-3 pb-2">VARIAN</p>
-                <div className="space-y-1.5 mb-2">
-                  {product.variants?.map((v) => (
-                    <div key={v.id} className="flex justify-between items-center text-sm">
-                      <span className="text-gray-700">{v.name}</span>
-                      <div className="flex items-center gap-3 text-gray-500">
-                        <span>Rp {Number(v.price).toLocaleString('id-ID')}</span>
-                        {v.stock_conversion > 1 && (
-                          <span className="text-xs bg-amber-50 text-amber-700 px-1.5 py-0.5 rounded">
-                            ×{v.stock_conversion}
-                          </span>
-                        )}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
+function ProductCard({ product }: { product: ProductRow }) {
+  const statusColor =
+    product.status === "active"
+      ? "bg-emerald-50 ring-emerald-100"
+      : "bg-stone-50 ring-stone-100";
 
-            <div className="px-4 pb-4">
-              <AddVariantForm productId={product.id} />
-            </div>
+  return (
+    <div className={`rounded-2xl p-5 ring-1 ${statusColor}`}>
+      <div className="flex items-start justify-between gap-4">
+        <div className="min-w-0 flex-1">
+          <div className="flex items-center gap-2">
+            <p className="font-serif text-base font-semibold text-stone-900">
+              {product.name}
+            </p>
+            <span
+              className={`text-[10px] font-semibold px-2 py-1 rounded-full ${
+                product.status === "active"
+                  ? "bg-emerald-100 text-emerald-700"
+                  : "bg-stone-200 text-stone-600"
+              }`}
+            >
+              {product.status === "active" ? "Aktif" : "Nonaktif"}
+            </span>
           </div>
-        ))}
+          {product.description && (
+            <p className="mt-1 text-xs text-stone-600 line-clamp-2">
+              {product.description}
+            </p>
+          )}
 
-        {products.length === 0 && (
-          <div className="text-center py-16 text-gray-400">
-            <p className="text-4xl mb-3">🍞</p>
-            <p className="font-medium">Belum ada produk</p>
-            <p className="text-sm mt-1">Tambah produk pertama di atas</p>
-          </div>
-        )}
+          {/* Variants */}
+          {product.variants.length > 0 && (
+            <div className="mt-3 space-y-1.5 rounded-xl bg-white/60 p-2.5">
+              <p className="text-[10px] font-semibold uppercase tracking-wider text-stone-400">
+                Varian ({product.variants.length})
+              </p>
+              <ul className="space-y-1">
+                {product.variants.map((v) => (
+                  <li
+                    key={v.id}
+                    className="flex justify-between text-xs text-stone-700"
+                  >
+                    <span>{v.name}</span>
+                    <span className="text-stone-500">
+                      Rp {Number(v.price).toLocaleString("id-ID")}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+        </div>
+
+        <form
+          action={async () => {
+            "use server";
+            await toggleProductStatus(product.id, product.status);
+          }}
+          className="shrink-0"
+        >
+          <button
+            type="submit"
+            className={`rounded-full px-4 py-2 text-xs font-semibold transition ${
+              product.status === "active"
+                ? "bg-stone-200 text-stone-700 hover:bg-stone-300"
+                : "bg-emerald-600 text-white hover:bg-emerald-700"
+            }`}
+          >
+            {product.status === "active" ? "Nonaktifkan" : "Aktifkan"}
+          </button>
+        </form>
+      </div>
+
+      {/* Add variant form */}
+      <div className="mt-4 border-t border-white pt-4">
+        <AddVariantForm productId={product.id} />
       </div>
     </div>
-  )
+  );
 }
