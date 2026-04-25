@@ -10,6 +10,7 @@ const nav = [
   { href: "/admin/stock", icon: "📦", label: "Stok" },
   { href: "/admin/products", icon: "🍞", label: "Produk" },
   { href: "/admin/finance", icon: "💰", label: "Keuangan" },
+  { href: "/admin/settings", icon: "⚙️", label: "Pengaturan" },
 ];
 
 export default function Sidebar() {
@@ -32,11 +33,11 @@ export default function Sidebar() {
         <div className="border-b border-stone-100 p-5">
           <div className="flex items-center gap-2">
             <span className="grid h-9 w-9 place-items-center rounded-full bg-rose-700 font-serif text-white">
-              T
+              S
             </span>
             <div>
               <p className="font-serif text-lg font-semibold text-stone-900">
-                Tatara
+                Sinar Jaya
               </p>
               <p className="text-[11px] text-stone-400">Panel Owner</p>
             </div>

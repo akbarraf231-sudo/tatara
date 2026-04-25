@@ -33,10 +33,10 @@ export default function LoginPage() {
       <div className="w-full max-w-sm">
         <div className="text-center">
           <span className="inline-grid h-12 w-12 place-items-center rounded-full bg-rose-700 font-serif text-xl text-white">
-            T
+            S
           </span>
           <h1 className="mt-4 font-serif text-2xl font-semibold text-stone-900">
-            Tatara — Panel Owner
+            Sinar Jaya — Panel Owner
           </h1>
           <p className="mt-1 text-sm text-stone-500">
             Masuk untuk mengelola toko.

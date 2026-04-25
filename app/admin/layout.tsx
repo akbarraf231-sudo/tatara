@@ -1,7 +1,7 @@
 import Sidebar from "@/components/admin/Sidebar";
 
 export const metadata = {
-  title: "Admin — Tatara Bakery",
+  title: "Admin — Sinar Jaya Bakery",
 };
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {

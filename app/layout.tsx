@@ -16,7 +16,7 @@ const fraunces = Fraunces({
 });
 
 export const metadata: Metadata = {
-  title: "Tatara Bakery — Roti & Kue Buatan Tangan, Ambil Sendiri",
+  title: "Sinar Jaya Bakery — Roti & Kue Homemade, Ambil di Toko",
   description:
     "Roti, kue, dan pastry homemade dipanggang fresh setiap hari. Pesan online, ambil di toko — tanpa pengiriman.",
 };

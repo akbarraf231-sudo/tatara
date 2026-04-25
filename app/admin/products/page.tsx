@@ -1,4 +1,8 @@
-import { AddProductForm, AddVariantForm } from "@/components/admin/ProductForm";
+import {
+  AddProductForm,
+  AddVariantForm,
+  EditProductImage,
+} from "@/components/admin/ProductForm";
 import { requireAdmin } from "@/lib/supabase/admin-guard";
 import { createClient } from "@/lib/supabase/server";
 import { toggleProductStatus } from "./actions";
@@ -17,6 +21,7 @@ type ProductRow = {
   id: string;
   name: string;
   description: string | null;
+  image_url: string | null;
   status: string;
   variants: VariantRow[];
 };
@@ -25,10 +30,12 @@ async function getProducts() {
   const supabase = await createClient();
   const { data } = await supabase
     .from("products")
-    .select(`
-      id, name, description, status,
+    .select(
+      `
+      id, name, description, image_url, status,
       variants (id, name, price, stock_conversion, status)
-    `)
+    `
+    )
     .order("created_at", { ascending: false });
 
   return (data ?? []) as unknown as ProductRow[];
@@ -47,9 +54,7 @@ export default async function ProductsPage() {
         <h1 className="mt-1 font-serif text-3xl font-semibold text-stone-900 md:text-4xl">
           Kelola produk
         </h1>
-        <p className="mt-1 text-stone-500">
-          {products.length} produk terdaftar
-        </p>
+        <p className="mt-1 text-stone-500">{products.length} produk terdaftar</p>
       </div>
 
       {/* Add product form */}
@@ -58,7 +63,7 @@ export default async function ProductsPage() {
           Tambah Produk Baru
         </h2>
         <p className="mt-1 text-xs text-stone-500">
-          Masukkan nama dan deskripsi singkat.
+          Masukkan nama, deskripsi, dan upload foto produk.
         </p>
         <div className="mt-4">
           <AddProductForm />
@@ -116,28 +121,6 @@ function ProductCard({ product }: { product: ProductRow }) {
               {product.description}
             </p>
           )}
-
-          {/* Variants */}
-          {product.variants.length > 0 && (
-            <div className="mt-3 space-y-1.5 rounded-xl bg-white/60 p-2.5">
-              <p className="text-[10px] font-semibold uppercase tracking-wider text-stone-400">
-                Varian ({product.variants.length})
-              </p>
-              <ul className="space-y-1">
-                {product.variants.map((v) => (
-                  <li
-                    key={v.id}
-                    className="flex justify-between text-xs text-stone-700"
-                  >
-                    <span>{v.name}</span>
-                    <span className="text-stone-500">
-                      Rp {Number(v.price).toLocaleString("id-ID")}
-                    </span>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          )}
         </div>
 
         <form
@@ -160,7 +143,40 @@ function ProductCard({ product }: { product: ProductRow }) {
         </form>
       </div>
 
-      {/* Add variant form */}
+      {/* Image */}
+      <div className="mt-4">
+        <p className="mb-1.5 text-[10px] font-semibold uppercase tracking-wider text-stone-400">
+          Foto Produk
+        </p>
+        <EditProductImage
+          productId={product.id}
+          currentUrl={product.image_url}
+        />
+      </div>
+
+      {/* Variants */}
+      {product.variants.length > 0 && (
+        <div className="mt-4 space-y-1.5 rounded-xl bg-white/60 p-3">
+          <p className="text-[10px] font-semibold uppercase tracking-wider text-stone-400">
+            Varian ({product.variants.length})
+          </p>
+          <ul className="space-y-1">
+            {product.variants.map((v) => (
+              <li
+                key={v.id}
+                className="flex justify-between text-xs text-stone-700"
+              >
+                <span>{v.name}</span>
+                <span className="text-stone-500">
+                  Rp {Number(v.price).toLocaleString("id-ID")}
+                </span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+
+      {/* Add variant */}
       <div className="mt-4 border-t border-white pt-4">
         <AddVariantForm productId={product.id} />
       </div>

@@ -1,11 +1,10 @@
 import CartDrawer from "@/components/cart/CartDrawer";
 import Footer from "@/components/Footer";
-import HiddenGear from "@/components/HiddenGear";
 import Navbar from "@/components/Navbar";
 import CheckoutForm from "./CheckoutForm";
 
 export const metadata = {
-  title: "Checkout — Tatara Bakery",
+  title: "Checkout — Sinar Jaya Bakery",
 };
 
 export default function CheckoutPage() {
@@ -33,7 +32,6 @@ export default function CheckoutPage() {
       </main>
 
       <Footer />
-      <HiddenGear />
     </>
   );
 }

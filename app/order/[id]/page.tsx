@@ -1,13 +1,13 @@
 import Footer from "@/components/Footer";
-import HiddenGear from "@/components/HiddenGear";
 import Navbar from "@/components/Navbar";
 import { formatDate, formatRupiah } from "@/lib/format";
+import { getSettings, waLink } from "@/lib/settings";
 import { createClient } from "@/lib/supabase/server";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
 export const metadata = {
-  title: "Pesanan Terkonfirmasi — Tatara Bakery",
+  title: "Pesanan Terkonfirmasi — Sinar Jaya Bakery",
 };
 
 type RouteParams = { id: string };
@@ -37,7 +37,10 @@ export default async function OrderConfirmationPage({
   params: Promise<RouteParams>;
 }) {
   const { id } = await params;
-  const supabase = await createClient();
+  const [supabase, settings] = await Promise.all([
+    createClient(),
+    getSettings(),
+  ]);
 
   const { data: order } = await supabase
     .from("orders")
@@ -55,10 +58,13 @@ export default async function OrderConfirmationPage({
 
   if (!order) notFound();
 
-  const waNumber = order.whatsapp.replace(/[^0-9]/g, "");
-  const waMessage = encodeURIComponent(
-    `Halo, saya ${order.customer_name}, baru saja memesan di Tatara Bakery dengan nomor pesanan ${order.id.slice(0, 8)}. Mohon konfirmasi.`
-  );
+  const shopWa = settings.whatsapp;
+  const waHref = shopWa
+    ? waLink(
+        shopWa,
+        `Halo ${settings.business_name}, saya ${order.customer_name} baru saja memesan dengan nomor #${order.id.slice(0, 8).toUpperCase()}. Mohon konfirmasi.`
+      )
+    : "#";
 
   return (
     <>
@@ -138,14 +144,14 @@ export default async function OrderConfirmationPage({
               toko sesuai tanggal di atas — pesananmu akan menunggu, hangat dan
               rapi.
             </p>
-            {waNumber && (
+            {shopWa && (
               <a
-                href={`https://wa.me/${waNumber}?text=${waMessage}`}
+                href={waHref}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="mt-4 inline-flex items-center gap-2 rounded-full bg-emerald-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-emerald-700"
               >
-                Konfirmasi via WhatsApp
+                Konfirmasi via WhatsApp ke Toko
               </a>
             )}
           </div>
@@ -162,7 +168,6 @@ export default async function OrderConfirmationPage({
       </main>
 
       <Footer />
-      <HiddenGear />
     </>
   );
 }

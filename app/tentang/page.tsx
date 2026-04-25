@@ -1,13 +1,20 @@
 import CartDrawer from "@/components/cart/CartDrawer";
 import Footer from "@/components/Footer";
-import HiddenGear from "@/components/HiddenGear";
 import Navbar from "@/components/Navbar";
+import { getSettings, waLink } from "@/lib/settings";
 
-export const metadata = {
-  title: "Tentang — Tatara Bakery",
-};
+export const dynamic = "force-dynamic";
 
-export default function TentangPage() {
+export async function generateMetadata() {
+  const s = await getSettings();
+  return {
+    title: `Tentang — ${s.business_name}`,
+  };
+}
+
+export default async function TentangPage() {
+  const s = await getSettings();
+
   return (
     <>
       <Navbar />
@@ -24,10 +31,11 @@ export default function TentangPage() {
 
           <div className="mt-8 space-y-5 text-stone-700">
             <p>
-              Tatara adalah toko roti rumahan yang fokus pada satu hal: roti
-              dan kue yang benar-benar fresh, dibuat dalam jumlah kecil setiap
-              hari. Kami memilih bahan dengan cermat, memberi adonan waktu
-              cukup untuk berkembang, dan memanggang dengan suhu yang pas.
+              {s.business_name} adalah toko roti rumahan yang fokus pada satu
+              hal: roti dan kue yang benar-benar fresh, dibuat dalam jumlah
+              kecil setiap hari. Kami memilih bahan dengan cermat, memberi
+              adonan waktu cukup untuk berkembang, dan memanggang dengan suhu
+              yang pas.
             </p>
             <p>
               Karena dibuat manual dan dalam jumlah terbatas, kami tidak
@@ -37,8 +45,8 @@ export default function TentangPage() {
             </p>
             <p>
               Untuk kue ulang tahun, hampers, atau pesanan dalam jumlah besar,
-              hubungi kami via email terlebih dahulu. Tenggat waktu kami atur
-              berdasarkan jenis pesanan.
+              hubungi kami via WhatsApp terlebih dahulu. Tenggat waktu kami
+              atur berdasarkan jenis pesanan.
             </p>
           </div>
 
@@ -47,24 +55,39 @@ export default function TentangPage() {
               Hubungi Kami
             </p>
             <ul className="mt-3 space-y-2 text-sm text-stone-700">
-              <li>
-                Email:{" "}
-                <a
-                  href="mailto:kerjadigital231@gmail.com"
-                  className="text-rose-700 hover:underline"
-                >
-                  kerjadigital231@gmail.com
-                </a>
-              </li>
-              <li>WhatsApp: 0812-XXXX-XXXX</li>
-              <li>Buka: Senin – Minggu, 07.00 – 21.00</li>
+              {s.whatsapp && (
+                <li>
+                  WhatsApp:{" "}
+                  <a
+                    href={waLink(s.whatsapp)}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-rose-700 hover:underline"
+                  >
+                    +{s.whatsapp}
+                  </a>
+                </li>
+              )}
+              {s.email && (
+                <li>
+                  Email:{" "}
+                  <a
+                    href={`mailto:${s.email}`}
+                    className="text-rose-700 hover:underline"
+                  >
+                    {s.email}
+                  </a>
+                </li>
+              )}
+              {s.address && <li>Alamat: {s.address}</li>}
+              {s.hours_weekday && <li>{s.hours_weekday}</li>}
+              {s.hours_weekend && <li>{s.hours_weekend}</li>}
             </ul>
           </div>
         </section>
       </main>
 
       <Footer />
-      <HiddenGear />
     </>
   );
 }

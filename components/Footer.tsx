@@ -1,6 +1,10 @@
+import { getSettings, waLink } from "@/lib/settings";
 import Link from "next/link";
 
-export default function Footer() {
+export default async function Footer() {
+  const s = await getSettings();
+  const initial = s.business_name.trim().charAt(0).toUpperCase() || "S";
+
   return (
     <footer className="mt-16 border-t border-stone-200 bg-stone-50">
       <div className="mx-auto max-w-6xl px-4 py-10">
@@ -8,15 +12,14 @@ export default function Footer() {
           <div>
             <div className="flex items-center gap-2">
               <span className="grid h-9 w-9 place-items-center rounded-full bg-rose-700 font-serif text-white">
-                T
+                {initial}
               </span>
               <span className="font-serif text-xl font-semibold text-stone-900">
-                Tatara Bakery
+                {s.business_name}
               </span>
             </div>
             <p className="mt-3 max-w-xs text-sm text-stone-500">
-              Roti, kue, dan pastry homemade dipanggang fresh setiap hari.
-              Pesan online, ambil langsung di toko.
+              {s.tagline}. Pesan online, ambil langsung di toko.
             </p>
           </div>
 
@@ -43,15 +46,29 @@ export default function Footer() {
               Kontak
             </p>
             <ul className="space-y-2 text-sm text-stone-700">
-              <li>
-                <a
-                  href="mailto:kerjadigital231@gmail.com"
-                  className="hover:text-rose-700"
-                >
-                  kerjadigital231@gmail.com
-                </a>
-              </li>
-              <li>WhatsApp: 0812-XXXX-XXXX</li>
+              {s.whatsapp && (
+                <li>
+                  <a
+                    href={waLink(s.whatsapp)}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="hover:text-rose-700"
+                  >
+                    WhatsApp: +{s.whatsapp}
+                  </a>
+                </li>
+              )}
+              {s.email && (
+                <li>
+                  <a
+                    href={`mailto:${s.email}`}
+                    className="hover:text-rose-700"
+                  >
+                    {s.email}
+                  </a>
+                </li>
+              )}
+              {s.address && <li>{s.address}</li>}
             </ul>
           </div>
 
@@ -60,14 +77,17 @@ export default function Footer() {
               Jam Buka
             </p>
             <ul className="space-y-1 text-sm text-stone-700">
-              <li>Senin – Jumat: 07.00 – 20.00</li>
-              <li>Sabtu – Minggu: 08.00 – 21.00</li>
+              {s.hours_weekday && <li>{s.hours_weekday}</li>}
+              {s.hours_weekend && <li>{s.hours_weekend}</li>}
             </ul>
           </div>
         </div>
 
         <div className="mt-10 flex flex-col items-start justify-between gap-2 border-t border-stone-200 pt-6 text-xs text-stone-400 md:flex-row md:items-center">
-          <p>© {new Date().getFullYear()} Tatara Bakery. Dibuat dengan cinta.</p>
+          <p>
+            © {new Date().getFullYear()} {s.business_name}. Dibuat dengan
+            cinta.
+          </p>
           <p>Self-pickup only · Tidak ada pengiriman</p>
         </div>
       </div>

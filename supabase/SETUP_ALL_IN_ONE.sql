@@ -1,5 +1,5 @@
 -- ============================================================================
--- TATARA BAKERY - SETUP DATABASE LENGKAP (JALANKAN SEMUA SEKALIGUS)
+-- SINAR JAYA BAKERY - SETUP DATABASE LENGKAP (JALANKAN SEMUA SEKALIGUS)
 -- ============================================================================
 -- Buka Supabase → SQL Editor → New Query → Paste seluruh file ini → Run
 -- ============================================================================
@@ -19,6 +19,7 @@ DROP TABLE IF EXISTS stock CASCADE;
 DROP TABLE IF EXISTS variants CASCADE;
 DROP TABLE IF EXISTS products CASCADE;
 DROP TABLE IF EXISTS profiles CASCADE;
+DROP TABLE IF EXISTS settings CASCADE;
 
 -- Profiles (role-based access)
 -- Setiap user yang sign up akan dapat profile otomatis (default role = 'customer')
@@ -61,6 +62,26 @@ RETURNS BOOLEAN AS $$
     WHERE id = auth.uid() AND role = 'admin'
   );
 $$ LANGUAGE sql SECURITY DEFINER STABLE;
+
+-- Settings (key-value): owner edit kontak, jam buka, dll
+CREATE TABLE settings (
+  key VARCHAR(50) PRIMARY KEY,
+  value TEXT NOT NULL DEFAULT '',
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+INSERT INTO settings (key, value) VALUES
+  ('business_name',      'Sinar Jaya Bakery'),
+  ('tagline',            'Roti & kue homemade fresh setiap hari'),
+  ('whatsapp',           '6285801299758'),
+  ('special_order_wa',   '6285801299758'),
+  ('email',              ''),
+  ('hours_weekday',      'Senin – Jumat: 07.00 – 20.00'),
+  ('hours_weekend',      'Sabtu – Minggu: 08.00 – 21.00'),
+  ('address',            ''),
+  ('hero_image',         'https://images.unsplash.com/photo-1568254183919-78a4f43a2877?w=900&q=80'),
+  ('story_image',        'https://images.unsplash.com/photo-1509440159596-0249088772ff?w=900&q=80')
+ON CONFLICT (key) DO NOTHING;
 
 -- Products
 CREATE TABLE products (
@@ -246,6 +267,7 @@ ALTER TABLE stock        ENABLE ROW LEVEL SECURITY;
 ALTER TABLE orders       ENABLE ROW LEVEL SECURITY;
 ALTER TABLE order_items  ENABLE ROW LEVEL SECURITY;
 ALTER TABLE transactions ENABLE ROW LEVEL SECURITY;
+ALTER TABLE settings     ENABLE ROW LEVEL SECURITY;
 
 -- Profiles: user bisa baca profile-nya sendiri, admin bisa baca semua
 CREATE POLICY "self_read_profile"  ON profiles FOR SELECT USING (auth.uid() = id);
@@ -255,6 +277,7 @@ CREATE POLICY "admin_read_profile" ON profiles FOR SELECT USING (is_admin());
 CREATE POLICY "public_read_products" ON products FOR SELECT USING (status = 'active');
 CREATE POLICY "public_read_variants" ON variants FOR SELECT USING (status = 'active');
 CREATE POLICY "public_read_stock"    ON stock    FOR SELECT USING (true);
+CREATE POLICY "public_read_settings" ON settings FOR SELECT USING (true);
 
 -- Admin (role=admin) bisa SEMUA aksi
 CREATE POLICY "admin_all_products"     ON products     FOR ALL USING (is_admin()) WITH CHECK (is_admin());
@@ -263,6 +286,27 @@ CREATE POLICY "admin_all_stock"        ON stock        FOR ALL USING (is_admin()
 CREATE POLICY "admin_all_orders"       ON orders       FOR ALL USING (is_admin()) WITH CHECK (is_admin());
 CREATE POLICY "admin_all_order_items"  ON order_items  FOR ALL USING (is_admin()) WITH CHECK (is_admin());
 CREATE POLICY "admin_all_transactions" ON transactions FOR ALL USING (is_admin()) WITH CHECK (is_admin());
+CREATE POLICY "admin_all_settings"     ON settings     FOR ALL USING (is_admin()) WITH CHECK (is_admin());
+
+-- ============================================================================
+-- BAGIAN 3.5: STORAGE BUCKET (untuk upload gambar produk)
+-- ============================================================================
+
+-- Buat bucket public untuk gambar produk
+INSERT INTO storage.buckets (id, name, public)
+VALUES ('product-images', 'product-images', true)
+ON CONFLICT (id) DO UPDATE SET public = true;
+
+-- Public bisa READ gambar produk (untuk ditampilkan di website)
+DROP POLICY IF EXISTS "public_read_product_images" ON storage.objects;
+CREATE POLICY "public_read_product_images" ON storage.objects
+  FOR SELECT USING (bucket_id = 'product-images');
+
+-- Admin bisa UPLOAD/UPDATE/DELETE gambar produk
+DROP POLICY IF EXISTS "admin_write_product_images" ON storage.objects;
+CREATE POLICY "admin_write_product_images" ON storage.objects
+  FOR ALL USING (bucket_id = 'product-images' AND is_admin())
+  WITH CHECK (bucket_id = 'product-images' AND is_admin());
 
 -- ============================================================================
 -- BAGIAN 4: SAMPLE DATA (untuk testing)

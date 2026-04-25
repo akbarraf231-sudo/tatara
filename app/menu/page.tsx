@@ -1,6 +1,5 @@
 import CartDrawer from "@/components/cart/CartDrawer";
 import Footer from "@/components/Footer";
-import HiddenGear from "@/components/HiddenGear";
 import Navbar from "@/components/Navbar";
 import ProductCard from "@/components/ProductCard";
 import { getActiveProducts } from "@/lib/products";
@@ -8,7 +7,7 @@ import { getActiveProducts } from "@/lib/products";
 export const revalidate = 30;
 
 export const metadata = {
-  title: "Menu — Tatara Bakery",
+  title: "Menu — Sinar Jaya Bakery",
   description: "Pilih roti, kue, dan pastry yang tersedia hari ini.",
 };
 
@@ -58,7 +57,6 @@ export default async function MenuPage() {
       </main>
 
       <Footer />
-      <HiddenGear />
     </>
   );
 }

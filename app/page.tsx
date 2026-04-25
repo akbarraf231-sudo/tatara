@@ -1,17 +1,28 @@
+import AdminLoginWidget from "@/components/AdminLoginWidget";
 import CartDrawer from "@/components/cart/CartDrawer";
 import Footer from "@/components/Footer";
-import HiddenGear from "@/components/HiddenGear";
 import Navbar from "@/components/Navbar";
 import ProductCard from "@/components/ProductCard";
 import { getActiveProducts } from "@/lib/products";
+import { getSettings, waLink } from "@/lib/settings";
 import Image from "next/image";
 import Link from "next/link";
 
 export const revalidate = 60;
 
 export default async function Home() {
-  const products = await getActiveProducts();
+  const [products, settings] = await Promise.all([
+    getActiveProducts(),
+    getSettings(),
+  ]);
   const featured = products.slice(0, 4);
+
+  const specialOrderHref = settings.special_order_wa
+    ? waLink(
+        settings.special_order_wa,
+        `Halo, saya ingin melakukan special order di ${settings.business_name}.\n\nNama:\nJenis pesanan:\nTanggal ambil yang diinginkan:\nKeterangan tambahan:`
+      )
+    : "#";
 
   return (
     <>
@@ -27,12 +38,12 @@ export default async function Home() {
                 Homemade · Fresh setiap hari
               </p>
               <h1 className="mt-4 font-serif text-4xl font-semibold leading-[1.05] text-stone-900 md:text-6xl">
-                Roti & kue, <br />
+                {settings.business_name},<br />
                 dipanggang <span className="italic text-rose-700">hari ini</span>.
               </h1>
               <p className="mt-5 max-w-md text-base text-stone-600">
-                Pesan online, ambil langsung di toko. Tanpa pengiriman, tanpa
-                ribet — cukup pilih, jadwalkan ambil, dan nikmati selagi hangat.
+                {settings.tagline}. Pesan online, ambil langsung di toko —
+                tanpa pengiriman, tanpa ribet.
               </p>
               <div className="mt-7 flex flex-wrap gap-3">
                 <Link
@@ -59,12 +70,13 @@ export default async function Home() {
             <div className="relative">
               <div className="relative aspect-[4/5] overflow-hidden rounded-[2rem] bg-stone-200 shadow-xl">
                 <Image
-                  src="https://images.unsplash.com/photo-1568254183919-78a4f43a2877?w=900&q=80"
-                  alt="Roti hangat baru keluar dari oven"
+                  src={settings.hero_image}
+                  alt={`${settings.business_name} — fresh dari oven`}
                   fill
                   sizes="(max-width: 768px) 100vw, 500px"
                   className="object-cover"
                   priority
+                  unoptimized
                 />
               </div>
               <div className="absolute -bottom-4 -left-4 hidden rounded-2xl bg-white p-4 shadow-xl ring-1 ring-stone-100 md:block">
@@ -181,11 +193,12 @@ export default async function Home() {
           <div className="grid items-center gap-10 md:grid-cols-2">
             <div className="relative aspect-square overflow-hidden rounded-[2rem] bg-stone-200 md:aspect-[4/5]">
               <Image
-                src="https://images.unsplash.com/photo-1509440159596-0249088772ff?w=900&q=80"
-                alt="Sourdough bread"
+                src={settings.story_image}
+                alt={`Cerita ${settings.business_name}`}
                 fill
                 sizes="(max-width: 768px) 100vw, 500px"
                 className="object-cover"
+                unoptimized
               />
             </div>
             <div>
@@ -196,21 +209,32 @@ export default async function Home() {
                 Dibuat dengan tangan, satu loyang dalam satu waktu.
               </h2>
               <p className="mt-4 text-stone-600">
-                Tatara adalah dapur rumahan kecil. Setiap pagi kami menimbang
-                tepung, membentuk adonan, dan menunggunya naik dengan sabar.
-                Tidak ada produksi massal — hanya roti dan kue yang dipanggang
-                hari itu, untuk diambil hari itu juga.
+                {settings.business_name} adalah dapur rumahan kecil. Setiap
+                pagi kami menimbang tepung, membentuk adonan, dan menunggunya
+                naik dengan sabar. Tidak ada produksi massal — hanya roti dan
+                kue yang dipanggang hari itu, untuk diambil hari itu juga.
               </p>
               <p className="mt-3 text-stone-600">
                 Untuk pesanan khusus seperti kue ulang tahun atau hampers,
-                hubungi kami via email — tenggat dan ketersediaan kami atur
+                hubungi kami via WhatsApp — tenggat dan ketersediaan kami atur
                 bersama.
               </p>
               <a
-                href="mailto:kerjadigital231@gmail.com"
-                className="mt-6 inline-block rounded-full border border-stone-300 px-5 py-2.5 text-sm font-semibold text-stone-800 transition hover:border-stone-500"
+                href={specialOrderHref}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="mt-6 inline-flex items-center gap-2 rounded-full bg-emerald-600 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-emerald-700"
               >
-                Email untuk Special Order
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  viewBox="0 0 24 24"
+                  fill="currentColor"
+                  className="h-4 w-4"
+                >
+                  <path d="M17.5 14.4c-.3-.1-1.7-.8-1.9-.9-.3-.1-.5-.1-.7.1-.2.3-.7.9-.9 1.1-.2.2-.3.2-.6.1-.3-.1-1.2-.4-2.3-1.4-.9-.8-1.4-1.7-1.6-2-.2-.3 0-.4.1-.6.1-.1.3-.3.4-.5.1-.2.2-.3.2-.5.1-.2 0-.4 0-.5-.1-.1-.7-1.6-.9-2.2-.2-.6-.5-.5-.7-.5h-.6c-.2 0-.5.1-.8.4-.3.3-1 1-1 2.5s1.1 2.9 1.2 3.1c.1.2 2.1 3.2 5 4.5.7.3 1.3.5 1.7.6.7.2 1.3.2 1.8.1.6-.1 1.7-.7 1.9-1.3.2-.7.2-1.2.2-1.3-.1-.1-.3-.2-.6-.3z" />
+                  <path d="M20.5 3.5C18.2 1.2 15.2 0 12 0 5.4 0 0 5.4 0 12c0 2.1.6 4.1 1.6 5.9L0 24l6.3-1.6c1.7 1 3.7 1.5 5.7 1.5 6.6 0 12-5.4 12-12 0-3.2-1.2-6.2-3.5-8.4zM12 21.8c-1.8 0-3.6-.5-5.2-1.4l-.4-.2-3.7 1 1-3.6-.2-.4C2.5 15.7 2 13.9 2 12c0-5.5 4.5-10 10-10 2.7 0 5.2 1 7.1 2.9 1.9 1.9 2.9 4.4 2.9 7.1 0 5.5-4.5 9.8-10 9.8z" />
+                </svg>
+                Special Order via WhatsApp
               </a>
             </div>
           </div>
@@ -237,7 +261,7 @@ export default async function Home() {
       </main>
 
       <Footer />
-      <HiddenGear />
+      <AdminLoginWidget />
     </>
   );
 }
