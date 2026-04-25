@@ -28,12 +28,30 @@ export default async function proxy(request: NextRequest) {
   const isLoginPage = path === '/admin/login'
   const isAdminPage = path.startsWith('/admin') && !isLoginPage
 
+  // Not logged in → kick to login
   if (isAdminPage && !user) {
     return NextResponse.redirect(new URL('/admin/login', request.url))
   }
 
-  if (isLoginPage && user) {
-    return NextResponse.redirect(new URL('/admin/dashboard', request.url))
+  // Logged in → check admin role
+  if (user && (isAdminPage || isLoginPage)) {
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('role')
+      .eq('id', user.id)
+      .single()
+
+    const isAdmin = profile?.role === 'admin'
+
+    // Non-admin tries to enter admin area → bounce home
+    if (isAdminPage && !isAdmin) {
+      return NextResponse.redirect(new URL('/', request.url))
+    }
+
+    // Admin already logged in → skip login page, go to dashboard
+    if (isLoginPage && isAdmin) {
+      return NextResponse.redirect(new URL('/admin/dashboard', request.url))
+    }
   }
 
   return response

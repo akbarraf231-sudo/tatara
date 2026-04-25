@@ -1,7 +1,7 @@
 import { AddProductForm, AddVariantForm } from '@/components/admin/ProductForm'
+import { requireAdmin } from '@/lib/supabase/admin-guard'
 import { createClient } from '@/lib/supabase/server'
 import { toggleProductStatus } from './actions'
-import { redirect } from 'next/navigation'
 
 async function getProducts() {
   const supabase = await createClient()
@@ -16,10 +16,7 @@ async function getProducts() {
 }
 
 export default async function ProductsPage() {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) redirect('/admin/login')
-
+  await requireAdmin()
   const products = await getProducts()
 
   return (

@@ -1,6 +1,6 @@
 import StockRow from '@/components/admin/StockRow'
+import { requireAdmin } from '@/lib/supabase/admin-guard'
 import { createClient } from '@/lib/supabase/server'
-import { redirect } from 'next/navigation'
 
 async function getStock() {
   const supabase = await createClient()
@@ -21,10 +21,7 @@ async function getStock() {
 }
 
 export default async function StockPage() {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) redirect('/admin/login')
-
+  await requireAdmin()
   const stocks = await getStock()
 
   const empty = stocks.filter((s) => s.quantity_available === 0)

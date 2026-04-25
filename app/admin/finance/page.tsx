@@ -1,6 +1,6 @@
 import AddExpenseForm from '@/components/admin/AddExpenseForm'
+import { requireAdmin } from '@/lib/supabase/admin-guard'
 import { createClient } from '@/lib/supabase/server'
-import { redirect } from 'next/navigation'
 
 async function getTransactions() {
   const supabase = await createClient()
@@ -27,10 +27,7 @@ function fmt(n: number) {
 }
 
 export default async function FinancePage() {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) redirect('/admin/login')
-
+  await requireAdmin()
   const { all, income, expense, profit } = await getTransactions()
 
   return (

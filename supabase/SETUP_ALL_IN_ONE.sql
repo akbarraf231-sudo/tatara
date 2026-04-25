@@ -18,6 +18,49 @@ DROP TABLE IF EXISTS orders CASCADE;
 DROP TABLE IF EXISTS stock CASCADE;
 DROP TABLE IF EXISTS variants CASCADE;
 DROP TABLE IF EXISTS products CASCADE;
+DROP TABLE IF EXISTS profiles CASCADE;
+
+-- Profiles (role-based access)
+-- Setiap user yang sign up akan dapat profile otomatis (default role = 'customer')
+-- Untuk jadikan user admin, jalankan di SQL Editor:
+--   UPDATE profiles SET role = 'admin' WHERE id = (SELECT id FROM auth.users WHERE email = 'kerjadigital231@gmail.com');
+CREATE TABLE profiles (
+  id UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
+  email VARCHAR(255),
+  role VARCHAR(20) NOT NULL DEFAULT 'customer' CHECK (role IN ('admin', 'customer')),
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+CREATE INDEX idx_profiles_role ON profiles(role);
+
+-- Auto-create profile on user signup
+CREATE OR REPLACE FUNCTION handle_new_user()
+RETURNS TRIGGER AS $$
+BEGIN
+  INSERT INTO public.profiles (id, email, role)
+  VALUES (NEW.id, NEW.email, 'customer')
+  ON CONFLICT (id) DO NOTHING;
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;
+CREATE TRIGGER on_auth_user_created
+  AFTER INSERT ON auth.users
+  FOR EACH ROW EXECUTE FUNCTION handle_new_user();
+
+-- Backfill existing auth.users into profiles
+INSERT INTO profiles (id, email, role)
+SELECT id, email, 'customer' FROM auth.users
+ON CONFLICT (id) DO NOTHING;
+
+-- Helper: cek apakah current user adalah admin
+CREATE OR REPLACE FUNCTION is_admin()
+RETURNS BOOLEAN AS $$
+  SELECT EXISTS (
+    SELECT 1 FROM profiles
+    WHERE id = auth.uid() AND role = 'admin'
+  );
+$$ LANGUAGE sql SECURITY DEFINER STABLE;
 
 -- Products
 CREATE TABLE products (
@@ -196,6 +239,7 @@ GRANT EXECUTE ON FUNCTION place_order TO authenticated, anon;
 -- BAGIAN 3: ROW LEVEL SECURITY (Akses untuk admin yang login)
 -- ============================================================================
 
+ALTER TABLE profiles     ENABLE ROW LEVEL SECURITY;
 ALTER TABLE products     ENABLE ROW LEVEL SECURITY;
 ALTER TABLE variants     ENABLE ROW LEVEL SECURITY;
 ALTER TABLE stock        ENABLE ROW LEVEL SECURITY;
@@ -203,18 +247,22 @@ ALTER TABLE orders       ENABLE ROW LEVEL SECURITY;
 ALTER TABLE order_items  ENABLE ROW LEVEL SECURITY;
 ALTER TABLE transactions ENABLE ROW LEVEL SECURITY;
 
+-- Profiles: user bisa baca profile-nya sendiri, admin bisa baca semua
+CREATE POLICY "self_read_profile"  ON profiles FOR SELECT USING (auth.uid() = id);
+CREATE POLICY "admin_read_profile" ON profiles FOR SELECT USING (is_admin());
+
 -- Public bisa READ produk aktif (untuk halaman menu di website)
 CREATE POLICY "public_read_products" ON products FOR SELECT USING (status = 'active');
 CREATE POLICY "public_read_variants" ON variants FOR SELECT USING (status = 'active');
 CREATE POLICY "public_read_stock"    ON stock    FOR SELECT USING (true);
 
--- Admin (authenticated) bisa SEMUA aksi
-CREATE POLICY "auth_all_products"     ON products     FOR ALL TO authenticated USING (true) WITH CHECK (true);
-CREATE POLICY "auth_all_variants"     ON variants     FOR ALL TO authenticated USING (true) WITH CHECK (true);
-CREATE POLICY "auth_all_stock"        ON stock        FOR ALL TO authenticated USING (true) WITH CHECK (true);
-CREATE POLICY "auth_all_orders"       ON orders       FOR ALL TO authenticated USING (true) WITH CHECK (true);
-CREATE POLICY "auth_all_order_items"  ON order_items  FOR ALL TO authenticated USING (true) WITH CHECK (true);
-CREATE POLICY "auth_all_transactions" ON transactions FOR ALL TO authenticated USING (true) WITH CHECK (true);
+-- Admin (role=admin) bisa SEMUA aksi
+CREATE POLICY "admin_all_products"     ON products     FOR ALL USING (is_admin()) WITH CHECK (is_admin());
+CREATE POLICY "admin_all_variants"     ON variants     FOR ALL USING (is_admin()) WITH CHECK (is_admin());
+CREATE POLICY "admin_all_stock"        ON stock        FOR ALL USING (is_admin()) WITH CHECK (is_admin());
+CREATE POLICY "admin_all_orders"       ON orders       FOR ALL USING (is_admin()) WITH CHECK (is_admin());
+CREATE POLICY "admin_all_order_items"  ON order_items  FOR ALL USING (is_admin()) WITH CHECK (is_admin());
+CREATE POLICY "admin_all_transactions" ON transactions FOR ALL USING (is_admin()) WITH CHECK (is_admin());
 
 -- ============================================================================
 -- BAGIAN 4: SAMPLE DATA (untuk testing)
@@ -234,6 +282,19 @@ SELECT id, 'Box (6 pcs)', 80000, 1, 'active' FROM products WHERE name = 'Brownie
 
 INSERT INTO stock (variant_id, quantity_available, quantity_reserved)
 SELECT id, 20, 0 FROM variants;
+
+-- ============================================================================
+-- BAGIAN 5: PROMOTE USER MENJADI ADMIN
+-- ============================================================================
+-- Setelah membuat user di Authentication → Users (kerjadigital231@gmail.com),
+-- jalankan query berikut untuk memberi role admin:
+
+UPDATE profiles
+SET role = 'admin'
+WHERE email = 'kerjadigital231@gmail.com';
+
+-- Verifikasi:
+-- SELECT email, role FROM profiles WHERE role = 'admin';
 
 -- ============================================================================
 -- SELESAI! Buka /admin/login untuk masuk admin panel

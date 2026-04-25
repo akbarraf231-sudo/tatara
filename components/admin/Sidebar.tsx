@@ -16,6 +16,9 @@ export default function Sidebar() {
   const pathname = usePathname()
   const router = useRouter()
 
+  // Sidebar tidak muncul di halaman login
+  if (pathname === '/admin/login') return null
+
   const handleLogout = async () => {
     const supabase = createClient()
     await supabase.auth.signOut()

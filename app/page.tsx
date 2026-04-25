@@ -1,4 +1,5 @@
 import Header from '@/components/Header'
+import HiddenGear from '@/components/HiddenGear'
 import Link from 'next/link'
 
 const SPECIAL_ORDER_EMAIL = 'kerjadigital231@gmail.com'
@@ -156,6 +157,7 @@ export default function Home() {
         </section>
 
       </main>
+      <HiddenGear />
     </>
   )
 }

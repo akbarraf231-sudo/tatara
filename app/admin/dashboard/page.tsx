@@ -1,6 +1,6 @@
 import DashboardCard from '@/components/admin/DashboardCard'
+import { requireAdmin } from '@/lib/supabase/admin-guard'
 import { createClient } from '@/lib/supabase/server'
-import { redirect } from 'next/navigation'
 
 async function getDashboardData() {
   const supabase = await createClient()
@@ -46,10 +46,7 @@ function fmt(n: number) {
 }
 
 export default async function DashboardPage() {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) redirect('/admin/login')
-
+  await requireAdmin()
   const { income, expense, profit, orders, lowStock } = await getDashboardData()
 
   const todayLabel = new Date().toLocaleDateString('id-ID', {

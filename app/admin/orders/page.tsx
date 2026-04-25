@@ -1,6 +1,6 @@
 import OrderRow from '@/components/admin/OrderRow'
+import { requireAdmin } from '@/lib/supabase/admin-guard'
 import { createClient } from '@/lib/supabase/server'
-import { redirect } from 'next/navigation'
 
 async function getOrders() {
   const supabase = await createClient()
@@ -14,10 +14,7 @@ async function getOrders() {
 }
 
 export default async function OrdersPage() {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) redirect('/admin/login')
-
+  await requireAdmin()
   const orders = await getOrders()
   const today = new Date().toISOString().split('T')[0]
 
